@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仪表盘测试5</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 30px;
+            padding: 0;
+            display: flex;
+            height: 105vh;
+            background: linear-gradient(135deg, #0a192f 0%, #112240 100%);
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .left-panel {
+            width: 65%;
+            padding: 30px;
+            background: rgba(17, 34, 64, 0.6);
+            border-radius: 25px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.1);
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        .right-panel {
+            width: 35%;
+            padding: 0; /*业内边距 30px*/ 
+            margin-left: 20px;
+            background: rgba(17, 34, 64, 0.6);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            border: 1px solid rgba(100, 255, 218, 0.1);
+        }
+
+        /*数据栏的每个盒子*/
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .metrics div {
+                
+            background: rgba(17, 34, 64, 0.8);/*rgba(17, 34, 64, 0.8)*/
+            border-radius: 20px;
+            padding: 20px;
+            text-align: left; /*数据居左*/
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            box-shadow: 0 0 20px rgba(100, 255, 218, 0.1);
+            position: relative;
+            margin-bottom: 20px;
+            animation: pulse-glow 8s infinite;  /*特效持续时长*/
+        }
+
+        @keyframes pulse-glow {
+            0% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(100, 255, 218, 0.1);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 40px rgba(100, 255, 218, 0.3);
+            }
+            100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(100, 255, 218, 0.1);
+            }
+        }
+
+        /*右上角的小图标*/
+        .metrics div i {
+            position: absolute;
+            top: 25px; /*图标位置与上边的距离*/ 
+            right: 10px;
+            font-size: 18px;
+            opacity: 0.8;
+            color: #a1a1aa;
+        }
+
+        .metrics div h5 {
+            font-size: 16px; /* 增大第一行标题字体 */
+            margin: 5px 0;
+        }
+
+        .metrics div h2 {
+            font-size: 28px; /* 增大中间数据字体 */
+            margin: 10px 0;
+        }
+
+        .metrics div h5:last-child {
+            color: #a1a1aa; /*最下行的对比数据，字体颜色改为#a1a1aa*/
+            font-size: 16px; /* 增大最后一行字体 */
+        }
+
+        .metrics div h5:nth-child(2) {
+            font-weight: bold; /*重点强调第二行数据*/
+        }   
+
+        .metrics div:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 25px rgba(100, 255, 218, 0.2);
+            border-color: #ffffff;
+        }
+
+        /*时间栏*/
+        .filter-container {
+            margin-bottom: 30px; /*30px*/
+            padding: 15px;
+            background: rgba(17, 34, 64, 0.8);
+            border-radius: 20px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-container select {
+            background: rgba(10, 25, 47, 0.8);
+            color: #ffffff;
+            padding: 10px 20px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 15px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        /*日历*/
+        .datetime-display {
+            font-family: 'Font Awesome 6 Brands'; 
+            color: #ffffff;
+            font-size: 17px;
+            margin-left: 20px;
+        }
+
+        /*统计图整体盒子*/
+        .chart-container {
+            background: rgba(17, 34, 64, 0.8);/*rgba(17, 34, 64, 0.8)*/
+            padding: 25px; /*25px*/
+            border-radius: 25px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .line-chart-container {
+            width: 65%;
+            height: 360px; /*图形高度300px*/
+        }
+
+        .pie-chart-container {
+            width: 30%;
+            height: 360px;
+            position: relative;
+        }
+
+        /*环形图中心的数据*/
+        .pie-chart-center {
+            position: absolute;
+            top: 45%;    /*数据上下位置*/
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .pie-chart-center h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #ffffff;
+        }
+
+        .pie-chart-center p {
+            margin: 5px 0 0;
+            font-size: 25px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .tiktok-container {
+            height: calc(100% - 0px);    /*calc(100% - 0px)*/
+            background: rgba(17, 34, 64, 0.8);
+            border-radius: 25px;
+            padding: 30px; /*25px 视频框与边界的宽度*/ 
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /*tiktok字体*/
+        .tiktok-container h3 {
+            /*font-family: 'Font Awesome 6 Brands'; */
+            font-size: 30px;
+            margin-bottom: 10px; /*20px*/
+            text-align: center;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+
+        /* tiktok图标 */
+        .tiktok-container h3 i {
+            margin-right: 5px;
+        }
+
+        /* 在 style 标签中添加或更新以下样式 */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            height: 87%;
+            overflow: hidden;
+            border-radius: 20px;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            transition: transform 0.5s ease;
+        }
+
+        video.slide-out {
+            transform: translateY(-100%);
+        }
+
+        video.slide-in {
+            transform: translateY(0);
+        }
+
+        /* 添加当前视频和下一个视频的样式 */
+        .current-video {
+            z-index: 1;
+        }
+
+        .next-video {
+            z-index: 0;
+            transform: translateY(100%);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            transition: transform 0.5s ease;
+        }
+
+        video.slide-out {
+            transform: translateY(-100%);
+        }
+
+        video.slide-in {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .left-panel, .right-panel {
+                width: 95%;
+                margin: 10px auto;
+            }
+
+            .chart-container {
+                flex-direction: column;
+            }
+
+            .line-chart-container, .pie-chart-container {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="left-panel">
+        <div class="metrics">
+            <div> 
+                <i class="fas fa-dollar-sign"></i>
+                <h5>买 家 平 均 值</h5>
+                <h2>$500</h2>
+                <h5>与 前 7 天 相 比：<span style="color: green;">+10%</span></h5>
+            </div>
+            <div>
+                <i class="fas fa-shopping-cart"></i>
+                <h5>订 单 数 量</h5>
+                <h2>+2000</h2>
+                <h5>与 前 7 天 相 比：<span style="color: red;">-5%</span></h5>
+            </div>
+            <div>
+                <i class="fas fa-chart-line"></i>
+                <h5>商 品 交 易 总 额</h5>
+                <h2>$1,000,000</h2>
+                <h5>与 前 7 天 相 比：<span style="color: green;">+8%</span></h5>
+            </div>
+            <div>
+                <i class="fas fa-coins"></i>
+                <h5>商 品 日 均 交 易 额</h5>
+                <h2>$15000</h2>
+                <h5>与 前 7 天 相 比：<span style="color: green;">+6%</span></h5>
+            </div>
+            <div> 
+                <i class="fas fa-eye"></i>
+                <h5>店 铺 日 均 浏 览 量</h5>
+                <h2>+82458</h2>
+                <h5>与 前 7 天 相 比：<span style="color: green;">+11%</span></h5>
+            </div>
+            <div> 
+                <i class="fas fa-users"></i>
+                <h5>店 铺 粉 丝 数</h5>
+                <h2>+1536</h2>
+                <h5>与 前 7 天 相 比：<span style="color: green;">+8%</span></h5>
+            </div>
+            <div> 
+                <i class="fas fa-box"></i>
+                <h5>合 作 商 品 数</h5>
+                <h2>+56</h5>
+                <h5>与 前 7 天 相 比：<span style="color: green;">+2%</span></h5>
+            </div>
+            <div> 
+                <i class="fas fa-star"></i>
+                <h5>合 作 达 人 数</h5>
+                <h2>+65</h2>
+                <h5>与 前 7 天 相 比：<span style="color: red;">-3%</span></h5>
+            </div>
+            
+        </div>
+
+        <div class="filter-container">
+            <div>
+                <label for="time-range">选择时间范围:</label>
+                <select id="time-range" onchange="handleTimeRangeChange(event)">
+                    <option value="7">过去 7 天</option>
+                    <option value="30">过去 30 天</option>
+                    <option value="90">过去 90 天</option>
+                </select>
+            </div>
+            <div class="datetime-display" id="datetime"></div>
+        </div>
+
+        <div class="chart-container">
+            <div class="line-chart-container">
+                <canvas id="line-chart"></canvas>
+            </div>
+            <div class="pie-chart-container">
+                <canvas id="pie-chart"></canvas>
+                <div class="pie-chart-center">
+                    <h3>GMV</h3>
+                    <p>¥650,000</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div class="tiktok-container">
+            <h3><i class="fab fa-tiktok"></i>TikTok</h3>
+            <div class="video-wrapper">
+                <video id="videoPlayer" controls autoplay>
+                    <source id="videoSource" src="" type="video/mp4">
+                </video>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // 视频文件名列表
+        var videoFiles = [
+            "mp4/video1.mp4",
+            "mp4/video2.mp4",
+            "mp4/video3.mp4"
+        ];
+    
+        var currentVideoIndex = 0;
+        var videoWrapper = document.querySelector('.video-wrapper');
+    
+        // 创建两个视频元素用于切换
+        var video1 = document.createElement('video');
+        var video2 = document.createElement('video');
+        
+        // 设置视频属性
+        [video1, video2].forEach(video => {
+            video.controls = true;
+            video.style.width = '100%';
+            video.style.height = '100%';
+        });
+    
+        // 将视频元素添加到容器中
+        videoWrapper.appendChild(video1);
+        videoWrapper.appendChild(video2);
+    
+        // 初始化第一个视频
+        video1.src = videoFiles[0];
+        video1.classList.add('current-video');
+        video2.classList.add('next-video');
+    
+        function switchVideos() {
+            const currentVideo = video1.classList.contains('current-video') ? video1 : video2;
+            const nextVideo = video1.classList.contains('current-video') ? video2 : video1;
+            
+            // 准备下一个视频
+            currentVideoIndex = (currentVideoIndex + 1) % videoFiles.length;
+            nextVideo.src = videoFiles[currentVideoIndex];
+            
+            // 执行切换动画
+            currentVideo.style.transform = 'translateY(-100%)';
+            nextVideo.style.transform = 'translateY(0)';
+            
+            // 切换类名
+            currentVideo.classList.remove('current-video');
+            currentVideo.classList.add('next-video');
+            nextVideo.classList.remove('next-video');
+            nextVideo.classList.add('current-video');
+            
+            // 播放下一个视频
+            nextVideo.play();
+            
+            // 重置位置
+            setTimeout(() => {
+                currentVideo.style.transform = 'translateY(100%)';
+            }, 500);
+        }
+    
+        // 监听视频播放结束事件
+        [video1, video2].forEach(video => {
+            video.addEventListener('ended', switchVideos);
+        });
+    
+        // 开始播放第一个视频
+        video1.play();
+    </script>
+    
+
+    <script>
+        // 更新日期时间显示
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                timeZone: 'GMT',
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZoneName: 'short'
+            };
+            document.getElementById('datetime').textContent = now.toLocaleString('zh-CN', options);
+        }
+        
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // 生成过去N天的日期数组
+        function generateDates(days) {
+            const dates = [];
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date.toISOString().split('T')[0]);
+            }
+            return dates;
+        }
+
+        // 生成模拟数据
+        function generateData(days, base, variance) {
+            return Array.from({length: days}, () => 
+                base + Math.floor(Math.random() * variance - variance/2)
+            );
+        }
+
+        const data7Days = {
+            dates: generateDates(7),
+            orders: generateData(7, 200, 60),
+            gmv: generateData(7, 55000, 10000)
+        };
+
+        const data30Days = {
+            dates: generateDates(30),
+            orders: generateData(30, 180, 50),
+            gmv: generateData(30, 52000, 8000)
+        };
+
+        const data90Days = {
+            dates: generateDates(90),
+            orders: generateData(90, 170, 40),
+            gmv: generateData(90, 50000, 7000)
+        };
+
+        const ctxLine = document.getElementById('line-chart').getContext('2d');
+        const lineChart = new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: data7Days.dates,
+                datasets: [{
+                    label: '订单数量',
+                    data: data7Days.orders,
+                    borderColor: '#64ffda',
+                    backgroundColor: 'rgba(100, 255, 218, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2
+                }, {
+                    label: 'GMV',
+                    data: data7Days.gmv,
+                    borderColor: '#00bfff',
+                    backgroundColor: 'rgba(0, 191, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#64ffda',
+                            font: {
+                                size: 14,
+                                family: "'Segoe UI', Arial, sans-serif"
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(100, 255, 218, 0.1)'
+                        },
+                        ticks: {
+                            color: '#64ffda'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(100, 255, 218, 0.1)'
+                        },
+                        ticks: {
+                            color: '#64ffda'
+                        }
+                    }
+                }
+            }
+        });
+
+        /*环形图*/
+        const ctxPie = document.getElementById('pie-chart').getContext('2d');
+        const pieChart = new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: ['直播', '视频', '自然流量'],
+                datasets: [{
+                    data: [200000, 300000, 150000],
+                    backgroundColor: [
+                        '#f6bfbc',  /*#f89588*/
+                        '#f5e56b',  /*#7cd6cf*/
+                        '#bce2e8'  /*#eddd86*/
+                    ],
+                    borderColor: 'rgba(17, 34, 64, 0.8)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#64ffda',
+                            font: {
+                                size: 12
+                            },
+                            padding: 10
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                const value = tooltipItem.raw.toLocaleString();
+                                const percentage = ((tooltipItem.raw / tooltipItem.dataset.data.reduce((a, b) => a + b)) * 100).toFixed(1);
+                                return `${tooltipItem.label}: ￥${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function handleTimeRangeChange(event) {
+            const selectedRange = event.target.value;
+            let data;
+            
+            switch(selectedRange) {
+                case '7':
+                    data = data7Days;
+                    break;
+                case '30':
+                    data = data30Days;
+                    break;
+                case '90':
+                    data = data90Days;
+                    break;
+            }
+
+            lineChart.data.labels = data.dates;
+            lineChart.data.datasets[0].data = data.orders;
+            lineChart.data.datasets[1].data = data.gmv;
+            lineChart.update();
+        }
+
+        // 自动切换时间范围
+        let timeRange = 7;
+        setInterval(function() {
+            timeRange = timeRange === 7 ? 30 : timeRange === 30 ? 90 : 7;
+            document.getElementById('time-range').value = timeRange;
+            handleTimeRangeChange({target: {value: timeRange}});
+        }, 5000);
+
+        // 动态切换数据
+        setInterval(function() {
+            let data;
+            switch(timeRange) {
+                case 7:
+                    data = data7Days;
+                    break;
+                case 30:
+                    data = data30Days;
+                    break;
+                case 90:
+                    data = data90Days;
+                    break;
+            }
+            lineChart.data.labels = data.dates;
+            lineChart.data.datasets[0].data = data.orders;
+            lineChart.data.datasets[1].data = data.gmv;
+            lineChart.update();
+        }, 5000);
+    </script>
+</body>
+</html>
